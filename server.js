@@ -75,10 +75,24 @@ async function generateCareerPathWithAI(studentProfile) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+
         const result = await response.json();
+
+        // SAFE CHECK: Print the full error if the API failed
+        if (result.error) {
+            console.error("GOOGLE API ERROR:", result.error.message);
+            return null;
+        }
+
+        // SAFE CHECK: Ensure candidates exist before reading [0]
+        if (!result.candidates || result.candidates.length === 0) {
+            console.error("AI BLOCKED: No candidates returned. Check safety settings.");
+            return null;
+        }
+
         return JSON.parse(result.candidates[0].content.parts[0].text);
     } catch (error) {
-        console.error("AI Production Error:", error);
+        console.error("CRITICAL AI EXCEPTION:", error.message);
         return null;
     }
 }
