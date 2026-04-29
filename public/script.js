@@ -111,17 +111,42 @@ function initQuestionsForm() {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // 1. Find and disable the button to prevent multiple clicks
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "AI is generating your roadmap...";
+        }
+
         const formData = new FormData(form);
         const answers = Object.fromEntries(formData.entries());
 
-        const res = await fetch('/api/questions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ studentId, answers })
-        });
-        const data = await res.json();
-        if (data.success) {
-            window.location.href = `results.html?studentId=${data.studentId}`;
+        try {
+            const res = await fetch('/api/questions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ studentId, answers })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                window.location.href = `results.html?studentId=${data.studentId}`;
+            } else {
+                // If API fails (High Demand), re-enable the button
+                alert("The AI is a bit busy right now. Please wait 30 seconds and try again!");
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Get My Personalized Roadmap";
+                }
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Get My Personalized Roadmap";
+            }
         }
     });
 }
